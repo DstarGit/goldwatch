@@ -1,0 +1,17 @@
+services:
+  goldinvest:
+    build:
+      context: .
+      dockerfile: Dockerfile.mikrus
+    container_name: goldinvest
+    restart: always
+    env_file:
+      - path: ./.env
+        required: false
+    ports:
+      - "40003:40003"
+    volumes:
+      - /storage/numi:/data
+    environment:
+      DATABASE_PATH: /data/numi.sqlite
+      SCRAPE_INTERVAL_SECONDS: "900"

@@ -1,0 +1,57 @@
+name: Build and Publish Container Images (Mikrus & GCP)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    tags: [ 'v*.*.*' ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: mikrus
+            dockerfile: goldinvest/Dockerfile.mikrus
+            tags: |
+              ghcr.io/${{ github.repository }}:mikrus
+          - target: gcp
+            dockerfile: goldinvest/Dockerfile.gcp
+            tags: |
+              ghcr.io/${{ github.repository }}:gcp
+              ghcr.io/${{ github.repository }}:cloudrun
+              ghcr.io/${{ github.repository }}:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push ${{ matrix.target }} image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./goldinvest
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ matrix.tags }}
+          platforms: linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

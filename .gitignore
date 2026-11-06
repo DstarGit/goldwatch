@@ -1,0 +1,24 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Environment and secrets
+.env
+*.env
+
+# SQLite databases and temp files
+*.sqlite
+*.sqlite3
+*.db
+/data/
+
+# Logs
+*.log
+numi_mcp/mcp_server.log
+
+# OS generated files
+.DS_Store
+Thumbs.db

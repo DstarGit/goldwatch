@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Złote monety 1 oz i 1/2 oz — GoldInvest24</title>
+  <script src="{{ url_for('static', filename='assets/tailwind.js') }}"></script>
+  <style>
+    a:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid #1d4ed8; outline-offset: 2px; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900">
+{% macro chg(v) %}{% if v is none %}<span class="text-slate-400">—</span>{% elif v > 0.005 %}<span class="text-red-700">+{{ '%.2f'|format(v)|replace('.', ',') }}%</span>{% elif v < -0.005 %}<span class="text-emerald-700">{{ '%.2f'|format(v)|replace('.', ',') }}%</span>{% else %}<span class="text-slate-500">0,00%</span>{% endif %}{% endmacro %}
+{% macro tbl(title, rows, ts) %}
+<section class="rounded-xl border border-slate-200 bg-white">
+  <div class="flex items-baseline justify-between px-4 pt-4">
+    <h2 class="text-lg font-semibold">{{ title }}</h2>
+    <p class="text-sm text-slate-500">odczyt: {{ ts|dt }}</p>
+  </div>
+  <div class="overflow-x-auto p-2">
+    <table class="min-w-full text-left text-sm">
+      <thead class="text-slate-600"><tr>
+        <th class="px-3 py-2 font-medium">Seria</th><th class="px-3 py-2 font-medium">Moneta</th>
+        <th class="px-3 py-2 text-right font-medium">Cena</th><th class="px-3 py-2 text-right font-medium">Zmiana</th>
+      </tr></thead>
+      <tbody>
+      {% for r in rows %}
+        <tr class="border-t border-slate-100">
+          <td class="px-3 py-2 font-medium">{{ r.series }}</td>
+          {% if r.available %}
+          <td class="px-3 py-2 text-slate-700">{{ r.name }}</td>
+          <td class="px-3 py-2 text-right font-semibold">{{ r.price|pln }}</td>
+          <td class="px-3 py-2 text-right">{{ chg(r.change) }}</td>
+          {% else %}
+          <td class="px-3 py-2 text-slate-400" colspan="3">brak towaru</td>
+          {% endif %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endmacro %}
+  <header class="border-b border-slate-200 bg-white">
+    <div class="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p class="text-sm text-slate-500">Archiwum cen</p>
+        <h1 class="text-2xl font-semibold tracking-tight">Złote monety bulionowe 1 oz i 1/2 oz</h1>
+        <p class="mt-1 text-sm text-slate-600">Ceny sklepu GoldInvest24, zapisywane automatycznie (1 oz co {{ interval }} min, 1/2 oz co 30 min).</p>
+      </div>
+      <p class="text-sm text-slate-500">Ostatnia zbiórka: <span class="font-medium text-slate-800">{{ run.finished_at|dt if run else 'jeszcze nie' }}</span></p>
+    </div>
+  </header>
+  <main class="mx-auto max-w-6xl px-4 py-8">
+    {% if run and run.error %}
+    <p class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">Ostatnia zbiórka nie powiodła się: {{ run.error }}</p>
+    {% endif %}
+    <div class="grid gap-4 lg:grid-cols-2">
+      {{ tbl('1 uncja', t1, t1_ts) }}
+      {{ tbl('1/2 uncji', t05, t05_ts) }}
+    </div>
+    <section class="mt-8 rounded-xl border border-slate-200 bg-white p-4">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <label for="coin-select" class="block text-sm font-medium text-slate-700">Moneta z historią odczytów</label>
+          <select id="coin-select" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm sm:w-[32rem]">
+            <optgroup label="1 uncja">
+              {% for c in coins['1'] %}<option value="1:{{ c.produkt_id }}">{{ c.nazwa }}</option>{% endfor %}
+            </optgroup>
+            <optgroup label="1/2 uncji">
+              {% for c in coins['0.5'] %}<option value="0.5:{{ c.produkt_id }}">{{ c.nazwa }}</option>{% endfor %}
+            </optgroup>
+          </select>
+        </div>
+        <p id="chart-meta" class="text-sm text-slate-500"></p>
+      </div>
+      <h2 id="chart-title" class="mt-4 text-lg font-semibold"></h2>
+      <p id="chart-tip" class="h-5 text-sm text-slate-700" style="visibility:hidden"></p>
+      <div id="chart-box" class="w-full"></div>
+    </section>
+  </main>
+  <script src="{{ url_for('static', filename='assets/chart.js') }}"></script>
+</body>
+</html>
